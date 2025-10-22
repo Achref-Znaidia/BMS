@@ -1,0 +1,3 @@
+Title,Description,Type,Priority,Status,Assigned To,ID
+ISS-001: Login Timeout,Users getting logged out after 5 minutes,General,Critical,Open,Backend Team,1
+ISS-002: UI Alignment,Button alignment issue on mobile devices,General,Low,Resolved,Frontend Team,2
