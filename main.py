@@ -3697,7 +3697,11 @@ def main(page: ft.Page):
                 "Test Suite": (ft.icons.PLAY_ARROW, ft.colors.ORANGE_600)
             }
             
-            icon, color = icon_map.get(activity["type"], (ft.icons.INFO, ft.colors.GREY_600))
+            if isinstance(activity, dict):
+                icon, color = icon_map.get(activity.get("type"), (ft.icons.INFO, ft.colors.GREY_600))
+            else:
+                print("Warning: activity is not a dict:", activity)
+                icon, color = ft.icons.INFO, ft.colors.GREY_600
             
             # Parse timestamp to show time only
             time_only = activity["timestamp"].split(" ")[1][:5]  # HH:MM format
