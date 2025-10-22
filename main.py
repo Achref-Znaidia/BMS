@@ -3697,55 +3697,26 @@ def main(page: ft.Page):
                 "Test Suite": (ft.icons.PLAY_ARROW, ft.colors.ORANGE_600)
             }
             
-            if isinstance(activity, dict):
-                icon, color = icon_map.get(activity.get("type"), (ft.icons.INFO, ft.colors.GREY_600))
-            else:
-                print("Warning: activity is not a dict:", activity)
-                icon, color = ft.icons.INFO, ft.colors.GREY_600
+            icon, color = icon_map.get(activity["type"], (ft.icons.INFO, ft.colors.GREY_600))
             
-            # Parse activity safely
-            if isinstance(activity, dict):
-                icon, color = icon_map.get(activity.get("type"), (ft.icons.INFO, ft.colors.GREY_600))
-                ts = activity.get("timestamp", "")
-                time_only = ts.split(" ")[1][:5] if ts else "??:??"
-                description = activity.get("description", "")
-                activity_type = activity.get("type", "Unknown")
-            else:
-                print("Warning: activity is not a dict:", activity)
-                icon, color = ft.icons.INFO, ft.colors.GREY_600
-                time_only = "??:??"
-                description = "N/A"
-                activity_type = "Unknown"
-
-            # Append container safely
+            # Parse timestamp to show time only
+            time_only = activity["timestamp"].split(" ")[1][:5]  # HH:MM format
+            
             activity_items.append(
                 ft.Container(
                     content=ft.Row([
                         ft.Icon(icon, color=color, size=20),
                         ft.Column([
-                            ft.Text(
-                                description,
-                                size=14,
-                                weight=ft.FontWeight.W_500,
-                                color=ft.colors.BLACK if app_data["theme_mode"] == ft.ThemeMode.LIGHT else ft.colors.WHITE
-                            ),
-                            ft.Text(
-                                f"{activity_type} • {time_only}",
-                                size=12,
-                                color=ft.colors.GREY_600 if app_data["theme_mode"] == ft.ThemeMode.LIGHT else ft.colors.GREY_400
-                            )
+                            ft.Text(activity["description"], size=14, weight=ft.FontWeight.W_500, color=ft.colors.BLACK if app_data["theme_mode"] == ft.ThemeMode.LIGHT else ft.colors.WHITE),
+                            ft.Text(f"{activity['type']} • {time_only}", size=12, color=ft.colors.GREY_600 if app_data["theme_mode"] == ft.ThemeMode.LIGHT else ft.colors.GREY_400)
                         ], spacing=2, expand=True),
                     ], spacing=12),
                     padding=ft.padding.symmetric(horizontal=12, vertical=8),
                     bgcolor=ft.colors.WHITE if app_data["theme_mode"] == ft.ThemeMode.LIGHT else ft.colors.GREY_800,
                     border_radius=8,
-                    border=ft.border.all(
-                        1,
-                        ft.colors.GREY_300 if app_data["theme_mode"] == ft.ThemeMode.LIGHT else ft.colors.GREY_600
-                    )
+                    border=ft.border.all(1, ft.colors.GREY_300 if app_data["theme_mode"] == ft.ThemeMode.LIGHT else ft.colors.GREY_600)
                 )
             )
-
         
         return ft.Container(
             content=ft.Column(activity_items, spacing=8),
@@ -3755,104 +3726,87 @@ def main(page: ft.Page):
             border=ft.border.all(1, ft.colors.GREY_200 if app_data["theme_mode"] == ft.ThemeMode.LIGHT else ft.colors.GREY_700)
         )
     
-def create_handovers_content():
-    """Create handovers tab content with dynamic data."""
-    handover_cards = []
-
-    # Filter out invalid entries and warn
-    safe_handovers = []
-    for h in app_data.get("handovers", []):
-        if isinstance(h, dict):
-            safe_handovers.append(h)
-        else:
-            print("Warning: handover is not a dict:", h)
-
-    # Sort safe handovers by id
-    for handover in sorted(safe_handovers, key=lambda x: x.get("id", 0), reverse=True):
-        status_color = {
-            "Pending": ft.colors.YELLOW_100,
-            "In Progress": ft.colors.ORANGE_100,
-            "Completed": ft.colors.GREEN_100
-        }.get(handover.get("status", "Pending"), ft.colors.GREY_100)
-
-        # Extract safe values with defaults
-        from_team = handover.get("from_team", "Unknown")
-        to_team = handover.get("to_team", "Unknown")
-        description = handover.get("description", "No description")
-        date = handover.get("date", "Unknown")
-        handover_id = handover.get("id", None)
-
-        handover_cards.append(
-            ft.Card(
-                content=ft.Container(
-                    content=ft.Column([
-                        ft.Row([
-                            ft.Text(f"{from_team} → {to_team}", size=16, weight=ft.FontWeight.BOLD),
-                            ft.Chip(label=ft.Text(handover.get("status", "Pending")), bgcolor=status_color)
-                        ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-                        ft.Text(description, size=14),
-                        ft.Text(f"Date: {date}", size=12, color=ft.colors.GREY_600),
-                        ft.Container(height=10),
-                        ft.Row([
-                            ft.ElevatedButton(
-                                "Edit",
-                                icon=ft.icons.EDIT,
-                                on_click=lambda e, hid=handover_id: edit_handover(hid) if hid is not None else None,
-                                bgcolor=ft.colors.BLUE_600,
-                                color=ft.colors.WHITE,
-                                width=120,
-                                height=36
-                            ),
-                            ft.ElevatedButton(
-                                "Delete",
-                                icon=ft.icons.DELETE,
-                                on_click=lambda e, hid=handover_id: delete_handover(hid) if hid is not None else None,
-                                bgcolor=ft.colors.RED_700,
-                                color=ft.colors.WHITE,
-                                width=120,
-                                height=36
-                            )
-                        ], spacing=10)
-                    ]),
-                    padding=15
+    def create_handovers_content():
+        """Create handovers tab content with dynamic data."""
+        handover_cards = []
+        
+        for handover in sorted(app_data["handovers"], key=lambda x: x["id"], reverse=True):
+            status_color = {
+                "Pending": ft.colors.YELLOW_100,
+                "In Progress": ft.colors.ORANGE_100,
+                "Completed": ft.colors.GREEN_100
+            }.get(handover.get("status", "Pending"), ft.colors.GREY_100)
+            
+            handover_cards.append(
+                ft.Card(
+                    content=ft.Container(
+                        content=ft.Column([
+                            ft.Row([
+                                ft.Text(f"{handover.get('from_team', 'Unknown')} → {handover.get('to_team', 'Unknown')}", size=16, weight=ft.FontWeight.BOLD),
+                                ft.Chip(label=ft.Text(handover.get("status", "Pending")), bgcolor=status_color)
+                            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+                            ft.Text(handover.get("description", "No description"), size=14),
+                            ft.Text(f"Date: {handover.get('date', 'Unknown')}", size=12, color=ft.colors.GREY_600),
+                            ft.Container(height=10),
+                            ft.Row([
+                                ft.ElevatedButton(
+                                    "Edit",
+                                    icon=ft.icons.EDIT,
+                                    on_click=lambda e, hid=handover["id"]: edit_handover(hid),
+                                    bgcolor=ft.colors.BLUE_600,
+                                    color=ft.colors.WHITE,
+                                    width=120,
+                                    height=36
+                                ),
+                                ft.ElevatedButton(
+                                    "Delete",
+                                    icon=ft.icons.DELETE,
+                                    on_click=lambda e, hid=handover["id"]: delete_handover(hid),
+                                    bgcolor=ft.colors.RED_700,
+                                    color=ft.colors.WHITE,
+                                    width=120,
+                                    height=36
+                                )
+                            ], spacing=10)
+                        ]),
+                        padding=15
+                    )
                 )
             )
-        )
-
-    return ft.Container(
-        content=ft.Column([
-            ft.Row([
-                ft.Text("Handovers Management", size=24, weight=ft.FontWeight.BOLD),
+        
+        return ft.Container(
+            content=ft.Column([
                 ft.Row([
-                    ft.ElevatedButton(
-                        "Export CSV",
-                        icon=ft.icons.TABLE_CHART,
-                        on_click=lambda e: export_to_excel("Handovers"),
-                        bgcolor=ft.colors.GREEN_600,
-                        color=ft.colors.WHITE,
-                        height=40
-                    ),
-                    ft.ElevatedButton(
-                        "New Handover",
-                        icon=ft.icons.ADD,
-                        on_click=add_handover,
-                        bgcolor=ft.colors.BLUE_600,
-                        color=ft.colors.WHITE,
-                        height=40
-                    )
-                ], spacing=10)
-            ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
-
-            ft.Container(height=20),
-
-            # Dynamic handover items
-            *handover_cards
-        ],
-        spacing=10
-        ),
-        padding=20
-    )
-
+                    ft.Text("Handovers Management", size=24, weight=ft.FontWeight.BOLD),
+                    ft.Row([
+                        ft.ElevatedButton(
+                            "Export CSV",
+                            icon=ft.icons.TABLE_CHART,
+                            on_click=lambda e: export_to_excel("Handovers"),
+                            bgcolor=ft.colors.GREEN_600,
+                            color=ft.colors.WHITE,
+                            height=40
+                        ),
+                        ft.ElevatedButton(
+                            "New Handover",
+                            icon=ft.icons.ADD,
+                            on_click=add_handover,
+                            bgcolor=ft.colors.BLUE_600,
+                            color=ft.colors.WHITE,
+                            height=40
+                        )
+                    ], spacing=10)
+                ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+                
+                ft.Container(height=20),
+                
+                # Dynamic handover items
+                *handover_cards
+            ],
+            spacing=10
+            ),
+            padding=20
+        )
     
     def create_requirements_content():
         """Create requirements tab content with dynamic data."""
