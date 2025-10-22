@@ -4577,7 +4577,7 @@ def main(page: ft.Page):
 async def run_app():
     """Run the Flet app with proper async handling."""
     try:
-        await ft.app_async(target=main, view=ft.AppView.WEB_BROWSER)
+        await ft.app_async(target=main) #, view=ft.AppView.WEB_BROWSER)
     except KeyboardInterrupt:
         print("App interrupted by user")
     except Exception as e:
