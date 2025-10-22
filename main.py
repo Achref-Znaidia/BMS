@@ -3704,7 +3704,16 @@ def main(page: ft.Page):
                 icon, color = ft.icons.INFO, ft.colors.GREY_600
             
             # Parse timestamp to show time only
-            time_only = activity["timestamp"].split(" ")[1][:5]  # HH:MM format
+            if isinstance(activity, dict):
+                ts = activity.get("timestamp", "")
+                if ts:
+                    time_only = ts.split(" ")[1][:5]  # HH:MM format
+                else:
+                    time_only = "??:??"
+            else:
+                print("Warning: activity is not a dict:", activity)
+                time_only = "??:??"
+            
             
             activity_items.append(
                 ft.Container(
