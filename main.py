@@ -3703,33 +3703,49 @@ def main(page: ft.Page):
                 print("Warning: activity is not a dict:", activity)
                 icon, color = ft.icons.INFO, ft.colors.GREY_600
             
-            # Parse timestamp to show time only
+            # Parse activity safely
             if isinstance(activity, dict):
+                icon, color = icon_map.get(activity.get("type"), (ft.icons.INFO, ft.colors.GREY_600))
                 ts = activity.get("timestamp", "")
-                if ts:
-                    time_only = ts.split(" ")[1][:5]  # HH:MM format
-                else:
-                    time_only = "??:??"
+                time_only = ts.split(" ")[1][:5] if ts else "??:??"
+                description = activity.get("description", "")
+                activity_type = activity.get("type", "Unknown")
             else:
                 print("Warning: activity is not a dict:", activity)
+                icon, color = ft.icons.INFO, ft.colors.GREY_600
                 time_only = "??:??"
+                description = "N/A"
+                activity_type = "Unknown"
             
-            
+            # Append container safely
             activity_items.append(
                 ft.Container(
                     content=ft.Row([
                         ft.Icon(icon, color=color, size=20),
                         ft.Column([
-                            ft.Text(activity["description"], size=14, weight=ft.FontWeight.W_500, color=ft.colors.BLACK if app_data["theme_mode"] == ft.ThemeMode.LIGHT else ft.colors.WHITE),
-                            ft.Text(f"{activity['type']} • {time_only}", size=12, color=ft.colors.GREY_600 if app_data["theme_mode"] == ft.ThemeMode.LIGHT else ft.colors.GREY_400)
+                            ft.Text(
+                                description,
+                                size=14,
+                                weight=ft.FontWeight.W_500,
+                                color=ft.colors.BLACK if app_data["theme_mode"] == ft.ThemeMode.LIGHT else ft.colors.WHITE
+                            ),
+                            ft.Text(
+                                f"{activity_type} • {time_only}",
+                                size=12,
+                                color=ft.colors.GREY_600 if app_data["theme_mode"] == ft.ThemeMode.LIGHT else ft.colors.GREY_400
+                            )
                         ], spacing=2, expand=True),
                     ], spacing=12),
                     padding=ft.padding.symmetric(horizontal=12, vertical=8),
                     bgcolor=ft.colors.WHITE if app_data["theme_mode"] == ft.ThemeMode.LIGHT else ft.colors.GREY_800,
                     border_radius=8,
-                    border=ft.border.all(1, ft.colors.GREY_300 if app_data["theme_mode"] == ft.ThemeMode.LIGHT else ft.colors.GREY_600)
+                    border=ft.border.all(
+                        1,
+                        ft.colors.GREY_300 if app_data["theme_mode"] == ft.ThemeMode.LIGHT else ft.colors.GREY_600
+                    )
                 )
             )
+            
         
         return ft.Container(
             content=ft.Column(activity_items, spacing=8),
